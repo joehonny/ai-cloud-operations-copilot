@@ -1,0 +1,11 @@
+{
+  "source": "fixture:portfolio-demo",
+  "severity": "high",
+  "summary": "Private DNS lookup failed for an application endpoint",
+  "evidence": [
+    "Lookup returned NXDOMAIN from the application subnet"
+  ],
+  "runbook_ids": [
+    "dns-resolution"
+  ]
+}

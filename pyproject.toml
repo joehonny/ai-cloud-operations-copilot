@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-cloud-operations-copilot"
+version = "0.1.0"
+description = "Offline-first reference implementation for AI-assisted cloud operations"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+dependencies = [
+  "pydantic>=2.12,<3",
+]
+
+[project.scripts]
+cloud-ops-copilot = "cloud_ops_copilot.cli:main"
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.4,<2",
+  "mypy>=1.19,<2",
+  "pytest>=9.0,<10",
+  "pytest-socket>=0.7,<1",
+  "ruff>=0.15,<1",
+]
+live = [
+  "openai>=2.21,<3",
+]
+
+[tool.hatch.build]
+exclude = [
+  "/.tools/**",
+  "/.worktrees/**",
+  "/.venv/**",
+  "/.superpowers/**",
+  "**/__pycache__/**",
+  "**/*.pyc",
+  "/.pytest_cache/**",
+  "/.mypy_cache/**",
+  "/.ruff_cache/**",
+  "/dist/**",
+  "/build/**",
+  "/reports/**",
+  "/htmlcov/**",
+  "/coverage.xml",
+  "/.coverage",
+  "**/*.egg-info/**",
+  "/.env",
+  "/.env.local",
+  "/.env.*.local",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cloud_ops_copilot"]
+include = ["src/cloud_ops_copilot/data/**"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/cloud_ops_copilot/**",
+  "evals/**",
+  "runbooks/**",
+  "tests/**",
+  ".env.example",
+  "CONTRIBUTING.md",
+  "LICENSE",
+  "README.md",
+  "SECURITY.md",
+  "examples/**",
+  "pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "cloud_ops_copilot.providers.mock"
+ignore_missing_imports = true

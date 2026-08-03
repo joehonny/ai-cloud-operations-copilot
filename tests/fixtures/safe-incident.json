@@ -1,0 +1,7 @@
+{
+  "source": "fixture:cli-smoke",
+  "severity": "high",
+  "summary": "Private DNS resolution failed",
+  "evidence": ["Lookup returned NXDOMAIN."],
+  "runbook_ids": ["dns-resolution"]
+}

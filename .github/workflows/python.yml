@@ -1,0 +1,76 @@
+name: Python CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-verification:
+    name: Python ${{ matrix.python-version }} offline verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.12"
+          - "3.13"
+          - "3.14"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install offline test and build dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Check formatting
+        run: python -m ruff format --check src tests
+
+      - name: Lint
+        run: python -m ruff check src tests
+
+      - name: Type check
+        run: python -m mypy src tests
+
+      - name: Test with sockets blocked
+        run: python -m pytest --disable-socket
+
+      - name: Run deterministic evaluation gate
+        run: python -m cloud_ops_copilot.cli eval
+
+      - name: Build and inspect distributions
+        shell: bash
+        run: |
+          set -euo pipefail
+          dist_dir="$RUNNER_TEMP/copilot-dist"
+          mkdir -p "$dist_dir"
+          python -m build --outdir "$dist_dir"
+          wheel="$(find "$dist_dir" -maxdepth 1 -name '*.whl' -print -quit)"
+          sdist="$(find "$dist_dir" -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          test -n "$wheel"
+          test -n "$sdist"
+          python -m zipfile -l "$wheel"
+          tar -tf "$sdist"
+          python -m pip uninstall -y ai-cloud-operations-copilot
+          python -m pip install --no-deps "$wheel"
+          cd "$RUNNER_TEMP"
+          python -m cloud_ops_copilot.cli eval
